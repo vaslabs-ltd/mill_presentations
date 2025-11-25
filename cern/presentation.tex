@@ -1,0 +1,356 @@
+\documentclass{beamer}
+
+\mode<presentation>
+{
+  \usetheme{Madrid}
+  \usecolortheme{rose}
+  \usefonttheme{structurebold}
+  \setbeamertemplate{navigation symbols}{}
+  \setbeamertemplate{caption}[numbered]
+}
+
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{listings}
+\usepackage{inconsolata}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  showstringspaces=false
+}
+
+\title[Take Control of Your Build with Mill]{Take Control of Your Build:\\Spring Boot and Beyond with Mill}
+\author{Vasilis Nicolaou}
+\institute{Vaslabs LTD}
+\date{\today}
+
+\begin{document}
+
+% =========================
+% Title & Agenda
+% =========================
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+% =========================
+% Intro / Context
+% =========================
+
+\section{Introduction}
+
+\begin{frame}{Who am I?}
+  \begin{itemize}
+    \item Java / JVM developer with a focus on build tooling and developer experience.
+    \item Contributor to Mill, especially around Android Apps but lately around Spring Boot.
+    \item Interested in making build systems easy to reason about and to extend.
+    \item Today: how Mill can give you more control over complex builds (Spring Boot, Android, and your own custom configurations).
+  \end{itemize}
+\end{frame}
+
+% =========================
+% Live Demos First
+% =========================
+
+\section{Mill in Action: Live Demos First}
+
+\subsection{Demo 1: Spring Boot with Mill}
+
+\begin{frame}[fragile]{Demo 1: A simple Spring Boot project}
+  \vspace{0.5em}
+  \textbf{Quick Mill setup commands:}
+  \begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny]
+curl -L https://repo1.maven.org/maven2/com/lihaoyi/mill-dist/1.1.0-RC2/mill-dist-1.1.0-RC2-mill.sh -o mill
+chmod +x mill
+./mill version
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Sample Mill build for Spring Boot}
+  \begin{lstlisting}[language=Scala]
+package build
+import mill.*, mill.javalib.*
+object `package` extends MavenModule {
+  def bomMvnDeps = Seq(
+    mvn"org.springframework.boot:spring-boot-dependencies:3.5.7"
+  )
+  def mvnDeps = 
+    Seq(mvn"org.springframework.boot:spring-boot-starter-web")
+  object test extends MavenTests, TestModule.Junit5 {
+    def bomMvnDeps = Seq(
+      mvn"org.springframework.boot:spring-boot-dependencies:3.5.7"
+    )
+    def mvnDeps =
+      Seq(mvn"org.springframework.boot:spring-boot-starter-test")
+  }
+}
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Spring Boot + Fmt}
+  \begin{lstlisting}[language=Scala]
+package build
+import mill.*, mill.javalib.*, palantirformat.PalantirFormatModule
+object `package` extends MavenModule, PalantirFormatModule {
+  def bomMvnDeps = Seq(
+    mvn"org.springframework.boot:spring-boot-dependencies:3.5.7"
+  )
+  def mvnDeps = 
+    Seq(mvn"org.springframework.boot:spring-boot-starter-web")
+  object test extends MavenTests, TestModule.Junit5 {
+    def bomMvnDeps = Seq(
+      mvn"org.springframework.boot:spring-boot-dependencies:3.5.7"
+    )
+    def mvnDeps =
+      Seq(mvn"org.springframework.boot:spring-boot-starter-test")
+  }
+}
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{What's happening under the hood?}
+\begin{lstlisting}
+$  ./mill visualizePlan compile
+\end{lstlisting}
+\end{frame}
+
+\subsection{Demo 2: AOT and GraalVM}
+
+\begin{frame}{Demo 2: Spring Boot AOT + GraalVM}
+  \begin{itemize}
+    \item Recently merged support in Mill for:
+      \begin{itemize}
+        \item Spring Boot AOT processing.
+        \item Building native images with GraalVM.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Demo 2: Spring Boot AOT + GraalVM}
+  \begin{lstlisting}[language=Scala]
+package build
+import mill.*, mill.javalib.*, spring.boot.SpringBootModule
+
+object `package` extends SpringBootModule, MavenModule {
+  override def springBootPlatformVersion = "3.5.7"
+  override def artifactName: T[String] = "spring-boot-native-demo"
+  object prod extends SpringBootOptimisedBuildModule, MavenModule
+  object native extends MavenModule, NativeSpringBootBuildModule {
+    def jvmId = "graalvm-community:23.0.1"
+  }
+  def mvnDeps = 
+    Seq(mvn"org.springframework.boot:spring-boot-starter-web")
+  object test extends SpringBootTestsModule, MavenTests, 
+        TestModule.Junit5 {
+    def mvnDeps =
+      Seq(mvn"org.springframework.boot:spring-boot-starter-test")
+  }
+}
+  \end{lstlisting}
+\end{frame}
+
+% =========================
+% Mill Design / Concepts
+% =========================
+
+\section{How Mill Works Under the Hood}
+
+\begin{frame}{Mill design principles}
+  \begin{itemize}
+    \item Build definitions are Scala code:
+      \begin{itemize}
+        \item Uses OO and FP patterns.
+        \item Easily refactorable and testable; each Task yields a value that can be inspected, cached, reused.
+      \end{itemize}
+    \item Task graph is generated automatically and is inspectable.
+      \begin{itemize}
+        \item No need to worry about caching or cleaning up task directories or task files
+        \item No need to declare dependencies between tasks.
+      \end{itemize}
+    \item Modules are composable units:
+      \begin{itemize}
+        \item Inheritance and composition instead of copy-paste.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Demo: Add Task, inspect its directory and value}
+  \begin{lstlisting}[language=Scala]
+trait FileCounterMavenModule extends MavenModule {
+
+  def countAllSourceFiles: T[Int] = Task {
+    allSourceFiles().filter(p => os.isFile(p.path)).size
+  }
+
+  def allGeneratedSourceFiles: T[Seq[PathRef]] = Task {
+    generatedSources().flatMap(p => 
+        os.walk(p.path).filter(os.isFile(_))
+    ).map(PathRef(_))
+  }
+
+  def countGeneratedSourceFiles: T[Int] = Task {
+    allGeneratedSourceFiles().size
+  }
+}
+  \end{lstlisting}
+\end{frame}
+
+% =========================
+% Spring Boot specifics
+% =========================
+
+\section{Annotation Processors}
+
+\begin{frame}{Java annotation Processors}
+  \begin{itemize}
+    \item Recently added support for easily adding annotation processors in Mill.
+    \item Annotation processor dependency resolution also takes into account Maven BOMs.
+    \item Useful for Spring Boot configuration metadata generation, Lombok, AutoValue, Dagger, Immutables, etc.
+    \item Example: \url{https://mill-build.org/mill/javalib/web-examples.html\#_micronaut_hello_world_app}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Kotlin: KSP support}
+  \begin{itemize}
+    \item Kotlin Symbol Processing(KSP) support was added as part of the ongoing efforts to add Android support in Mill.
+    \item Can be used for both Kotlin and Android projects.
+    \item Micronaut example: \url{https://mill-build.org/mill/kotlinlib/web-examples.html\#_micronaut_app}
+    \item Dagger example: \url{https://mill-build.org/mill/kotlinlib/module-config.html\#_dependency_injection_with_dagger_and_ksp}
+  \end{itemize}
+\end{frame}
+
+% =========================
+% Android as Stress Test
+% =========================
+
+\section{Android}
+
+\subsection{Mill Under Extreme Conditions}
+
+\begin{frame}{Android support shows how well designed Mill is}
+  \begin{itemize}
+    \item My first experience with Mill was to add support for Android builds: \url{https://github.com/com-lihaoyi/mill/pull/4169}
+    \item We've developed the basic feature set for the dev lifecycle and got it merged within 2 weeks.
+    \item About a year from now, Mill supports all kinds of complex Android configurations out of the box.
+    \item Android builds are:
+      \begin{itemize}
+        \item Multi-stage (resources (compiling, linking), manifests, dexing, packaging).
+        \item Tooling-heavy and configuration-heavy.
+      \end{itemize}
+    \item If a build tool can handle Android cleanly:
+      \begin{itemize}
+        \item It has the right design foundations 
+        \item It’s a good sign it can handle complex pipelines
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+%To be continued...
+
+\begin{frame}[fragile]{High-level Android pipeline in Mill (conceptual)}
+  \begin{lstlisting}
+compileJava     -> compile Android sources
+mergeResources  -> combine resources from modules
+processManifest -> generate final AndroidManifest.xml
+dex             -> compile to DEX bytecode
+packageApk      -> build APK / AAB
+install         -> deploy to device/emulator
+  \end{lstlisting}
+
+  \begin{itemize}
+    \item Each step can be a task in the Mill graph.
+    \item Overridable, inspectable, testable.
+    \item I will show diagrams of the actual task graph in the talk.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Visualizing the task graph}
+  \begin{itemize}
+    \item Mill’s task graph can be exported and visualized.
+    \item For Android:
+      \begin{itemize}
+        \item Reveal how many steps are involved.
+        \item Show how they depend on each other.
+      \end{itemize}
+    \item Message: even complex builds become understandable when tasks are explicit.
+  \end{itemize}
+
+  \vspace{1em}
+  \centering
+  \textit{(Here I’ll insert generated diagrams of the Android task graph.)}
+\end{frame}
+
+% =========================
+% Comparison & Wrap-up
+% =========================
+
+\section{Putting it all Together}
+
+\begin{frame}{Mill vs Maven vs Gradle (conceptual)}
+  \begin{itemize}
+    \item Maven:
+      \begin{itemize}
+        \item Declarative, rigid lifecycle.
+        \item Harder to customize deeply.
+      \end{itemize}
+    \item Gradle:
+      \begin{itemize}
+        \item Powerful but DSL-based.
+        \item Complex plugin ecosystem, sometimes opaque.
+      \end{itemize}
+    \item Mill:
+      \begin{itemize}
+        \item Build = code (Scala).
+        \item Explicit tasks and module structure.
+        \item Easy to refactor and reason about.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Why this matters for CERN}
+  \begin{itemize}
+    \item Large, long-lived codebases.
+    \item Complex dependency graphs and build pipelines.
+    \item Need for:
+      \begin{itemize}
+        \item Reproducibility.
+        \item Debuggability.
+        \item Clear ownership of build logic.
+      \end{itemize}
+    \item Mill provides:
+      \begin{itemize}
+        \item Transparent, inspectable build graphs.
+        \item Easy adaptation to project-specific workflows.
+        \item A path to tame complex builds like Spring Boot + AOT + Android.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Key takeaways}
+  \begin{itemize}
+    \item Mill treats builds as real code, not opaque configuration.
+    \item The task graph is explicit, inspectable, and composable.
+    \item Spring Boot and AOT/GraalVM support show Mill’s power for modern JVM apps.
+    \item Android support demonstrates that Mill scales to highly complex build pipelines.
+    \item You can take control of your build without sacrificing power.
+  \end{itemize}
+\end{frame}
+
+\section{Q\&A}
+
+\begin{frame}{Questions?}
+  \centering
+  \Large{Thank you!}\\[1em]
+  \normalsize
+  \texttt{(Contact / GitHub / links to Mill and demo repos here)}
+\end{frame}
+
+\end{document}
