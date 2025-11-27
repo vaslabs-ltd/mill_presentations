@@ -45,7 +45,8 @@ fedora:
 		texlive-l3kernel \
 		texlive-l3packages \
 		texlive-translator \
-		texlive-pgfplots
+		texlive-pgfplots \
+		texlive-qrcode
 	@echo "TeXLive packages installation complete!"
 
 # Compile the PDF

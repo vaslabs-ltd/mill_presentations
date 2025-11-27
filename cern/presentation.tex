@@ -13,6 +13,12 @@
 \usepackage[utf8x]{inputenc}
 \usepackage{listings}
 \usepackage{inconsolata}
+\usepackage{qrcode}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning}
+
+\usepackage{upquote}
 
 \lstset{
   basicstyle=\ttfamily\small,
@@ -167,7 +173,7 @@ object `package` extends SpringBootModule, MavenModule {
   \begin{itemize}
     \item Build definitions are Scala code:
       \begin{itemize}
-        \item Uses OO and FP patterns.
+        \item Uses best world of OOP and FP.
         \item Easily refactorable and testable; each Task yields a value that can be inspected, cached, reused.
       \end{itemize}
     \item Task graph is generated automatically and is inspectable.
@@ -239,7 +245,7 @@ trait FileCounterMavenModule extends MavenModule {
   \begin{itemize}
     \item My first experience with Mill was to add support for Android builds: \url{https://github.com/com-lihaoyi/mill/pull/4169}
     \item We've developed the basic feature set for the dev lifecycle and got it merged within 2 weeks.
-    \item About a year from now, Mill supports all kinds of complex Android configurations out of the box.
+    \item About a year since, Mill supports all kinds of complex Android configurations out of the box.
     \item Android builds are:
       \begin{itemize}
         \item Multi-stage (resources (compiling, linking), manifests, dexing, packaging).
@@ -256,101 +262,113 @@ trait FileCounterMavenModule extends MavenModule {
 %To be continued...
 
 \begin{frame}[fragile]{High-level Android pipeline in Mill (conceptual)}
-  \begin{lstlisting}
-compileJava     -> compile Android sources
-mergeResources  -> combine resources from modules
-processManifest -> generate final AndroidManifest.xml
-dex             -> compile to DEX bytecode
-packageApk      -> build APK / AAB
-install         -> deploy to device/emulator
-  \end{lstlisting}
-
-  \begin{itemize}
-    \item Each step can be a task in the Mill graph.
-    \item Overridable, inspectable, testable.
-    \item I will show diagrams of the actual task graph in the talk.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Visualizing the task graph}
-  \begin{itemize}
-    \item Mill’s task graph can be exported and visualized.
-    \item For Android:
-      \begin{itemize}
-        \item Reveal how many steps are involved.
-        \item Show how they depend on each other.
-      \end{itemize}
-    \item Message: even complex builds become understandable when tasks are explicit.
-  \end{itemize}
-
-  \vspace{1em}
   \centering
-  \textit{(Here I’ll insert generated diagrams of the Android task graph.)}
+  \begin{tikzpicture}[
+    node distance=0.1cm,
+    every node/.style={
+      rectangle,
+      draw,
+      rounded corners,
+      align=center,
+      inner sep=4pt,
+      font=\scriptsize
+    },
+    >=LaTeX
+  ]
+
+    % Left column: inputs
+    \node (src) {Java/Kotlin\\Sources};
+    \node (res) [below=of src] {Resources\\(res/)};
+    \node (man) [below=of res] {AndroidManifest.xml};
+
+    % Middle column: processing
+    \node (cjava) [right=1cm of src] {Compile\\(Java/Kotlin)};
+    \node (cres)  [right=1cm of res] {Compile Resources\\(aapt2)};
+    \node (mmerge)[below=1cm of man] {Manifest\\Merging};
+
+    \node (linked) [right=0.5cm of mmerge] {Linked Resources};
+
+    % Right column: classes / dex / packaging
+    \node (classes) [right=1cm of cjava] {Compiled\\Classes};
+    \node (dex)     [below=of classes] {DEX\\(d8/r8)};
+    \node (pack)    [right=0.2cm of linked] {Package APK};
+    \node (shrink)  [below=of pack] {Code Shrinking\\(r8/Proguard)};
+    \node (sign)    [below=of shrink] {Sign APK};
+    \node (install) [below=of sign] {Install to\\Emulator};
+    \node (run)     [right=of install] {Run/Test\\via ADB};
+
+    % Edges
+    \draw[->] (src) -- (cjava);
+    \draw[->] (res) -- (cres);
+    \draw[->] (man) -- (mmerge);
+
+    \draw[->] (mmerge) -- (linked);
+    \draw[->] (cres)   -- (linked);
+
+    \draw[->] (cjava)  -- (classes);
+    \draw[->] (classes) -- (dex);
+
+    \draw[->] (linked) -- (pack);
+    \draw[->] (dex)    -- (pack);
+
+    \draw[->] (pack)   -- (shrink);
+    \draw[->] (shrink) -- (sign);
+    \draw[->] (sign)   -- (install);
+    \draw[->] (install)-- (run);
+
+  \end{tikzpicture}
 \end{frame}
 
+\begin{frame}{Visualizing the task graph for androidApk}
+  \includegraphics[scale=0.045]{jetnews_visualise_plan}
+\end{frame}
+
+\begin{frame}{Spring Boot native.nativeImage comparison}
+    \includegraphics[scale=0.045]{springboot_native_visualise}
+\end{frame}
 % =========================
 % Comparison & Wrap-up
 % =========================
 
-\section{Putting it all Together}
+\section{Closing Remarks}
 
-\begin{frame}{Mill vs Maven vs Gradle (conceptual)}
-  \begin{itemize}
-    \item Maven:
-      \begin{itemize}
-        \item Declarative, rigid lifecycle.
-        \item Harder to customize deeply.
-      \end{itemize}
-    \item Gradle:
-      \begin{itemize}
-        \item Powerful but DSL-based.
-        \item Complex plugin ecosystem, sometimes opaque.
-      \end{itemize}
-    \item Mill:
-      \begin{itemize}
-        \item Build = code (Scala).
-        \item Explicit tasks and module structure.
-        \item Easy to refactor and reason about.
-      \end{itemize}
-  \end{itemize}
-\end{frame}
+\subsection{Key Takeaways}
 
-\begin{frame}{Why this matters for CERN}
+\begin{frame}{Key Takeaways}
   \begin{itemize}
-    \item Large, long-lived codebases.
-    \item Complex dependency graphs and build pipelines.
-    \item Need for:
-      \begin{itemize}
-        \item Reproducibility.
-        \item Debuggability.
-        \item Clear ownership of build logic.
-      \end{itemize}
-    \item Mill provides:
-      \begin{itemize}
-        \item Transparent, inspectable build graphs.
-        \item Easy adaptation to project-specific workflows.
-        \item A path to tame complex builds like Spring Boot + AOT + Android.
-      \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Key takeaways}
-  \begin{itemize}
-    \item Mill treats builds as real code, not opaque configuration.
+    \item Mill treats builds as real code, not opaque configuration (but if you wish, you can also use the latter with yaml (new)).
     \item The task graph is explicit, inspectable, and composable.
     \item Spring Boot and AOT/GraalVM support show Mill’s power for modern JVM apps.
     \item Android support demonstrates that Mill scales to highly complex build pipelines.
-    \item You can take control of your build without sacrificing power.
+    \item You can take control of your build by easily understanding and extending it.
   \end{itemize}
 \end{frame}
 
-\section{Q\&A}
+\subsection{Q\&A}
 
-\begin{frame}{Questions?}
+\begin{frame}{Questions}
+  \begin{itemize}
+    \item Which version of Spring boot are you using?
+    \item What is your library stack? (Mono/Flux, rxJava, Lombok, Immutables)
+    \item Do you deploy native images? Are you using AOT?
+    \item Any other testing libraries/pre-processors?
+    \item What is the biggest pain on the build tool you are using?
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Thank you!}
   \centering
   \Large{Thank you!}\\[1em]
   \normalsize
-  \texttt{(Contact / GitHub / links to Mill and demo repos here)}
+  \begin{itemize}
+      \item Documentation: \url{https://mill-build.org/}
+      \item Github Repo: \url{https://github.com/com-lihaoyi/mill}
+      \item Try Mill and join Mill's Discord Channel:
+  \end{itemize}
+
+  \quad
+  \qrcode[height=5cm]{https://discord.gg/bt3DPbfUmV}
+
 \end{frame}
 
 \end{document}
