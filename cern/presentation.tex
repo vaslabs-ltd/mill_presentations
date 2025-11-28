@@ -31,7 +31,7 @@
 \title[Take Control of Your Build with Mill]{Take Control of Your Build:\\Spring Boot and Beyond with Mill}
 \author{Vasilis Nicolaou}
 \institute{Vaslabs LTD}
-\date{\today}
+\date{CERN @ 02 December 2025}
 
 \begin{document}
 
@@ -55,10 +55,10 @@
 
 \begin{frame}{Who am I?}
   \begin{itemize}
-    \item Java / JVM developer with a focus on build tooling and developer experience.
-    \item Contributor to Mill, especially around Android Apps but lately around Spring Boot.
-    \item Interested in making build systems easy to reason about and to extend.
-    \item Today: how Mill can give you more control over complex builds (Spring Boot, Android, and your own custom configurations).
+    \item JVM developer (Java, Scala) with experience in distributed systems.
+    \item Contributor to Mill, initially adding Android support and lately around Spring Boot.
+    \item I went through various build tools; Maven, Gradle, Sbt and now... Mill!
+    \item Today: Software Engineering Consultant with own firm and a small but strong team of software engineers!
   \end{itemize}
 \end{frame}
 
@@ -74,7 +74,8 @@
   \vspace{0.5em}
   \textbf{Quick Mill setup commands:}
   \begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny]
-curl -L https://repo1.maven.org/maven2/com/lihaoyi/mill-dist/1.1.0-RC2/mill-dist-1.1.0-RC2-mill.sh -o mill
+url=https://repo1.maven.org/maven2/com/lihaoyi/mill-dist/1.1.0-RC2-40-0576e4/mill-dist-1.1.0-RC2-40-0576e4-mill.sh
+curl -L "${url}" -o mill
 chmod +x mill
 ./mill version
 \end{lstlisting}
@@ -84,17 +85,18 @@ chmod +x mill
   \begin{lstlisting}[language=Scala]
 package build
 import mill.*, mill.javalib.*
-object `package` extends MavenModule {
-  def bomMvnDeps = Seq(
+
+object `package` extends MavenModule { outer =>
+  override def bomMvnDeps = Seq(
     mvn"org.springframework.boot:spring-boot-dependencies:3.5.7"
   )
-  def mvnDeps = 
-    Seq(mvn"org.springframework.boot:spring-boot-starter-web")
+  override def mvnDeps = Seq(
+    mvn"org.springframework.boot:spring-boot-starter-web"
+  )
+
   object test extends MavenTests, TestModule.Junit5 {
-    def bomMvnDeps = Seq(
-      mvn"org.springframework.boot:spring-boot-dependencies:3.5.7"
-    )
-    def mvnDeps =
+    override def bomMvnDeps = outer.bomMvnDeps()
+    override def mvnDeps =
       Seq(mvn"org.springframework.boot:spring-boot-starter-test")
   }
 }
@@ -105,26 +107,19 @@ object `package` extends MavenModule {
   \begin{lstlisting}[language=Scala]
 package build
 import mill.*, mill.javalib.*, palantirformat.PalantirFormatModule
-object `package` extends MavenModule, PalantirFormatModule {
-  def bomMvnDeps = Seq(
-    mvn"org.springframework.boot:spring-boot-dependencies:3.5.7"
-  )
-  def mvnDeps = 
-    Seq(mvn"org.springframework.boot:spring-boot-starter-web")
-  object test extends MavenTests, TestModule.Junit5 {
-    def bomMvnDeps = Seq(
-      mvn"org.springframework.boot:spring-boot-dependencies:3.5.7"
-    )
-    def mvnDeps =
-      Seq(mvn"org.springframework.boot:spring-boot-starter-test")
-  }
-}
+object `package` extends MavenModule,PalantirFormatModule
   \end{lstlisting}
+  \vspace{0.5em}
+  \textbf{Or without build code changes}
+  \begin{lstlisting}[language=Bash]
+   ./mill mill.javalib.palantirformat.PalantirFormatModule/
+  \end{lstlisting}
+
 \end{frame}
 
 \begin{frame}[fragile]{What's happening under the hood?}
-\begin{lstlisting}
-$  ./mill visualizePlan compile
+\begin{lstlisting}[language=Bash]
+./mill visualizePlan compile
 \end{lstlisting}
 \end{frame}
 
@@ -336,7 +331,7 @@ trait FileCounterMavenModule extends MavenModule {
 
 \begin{frame}{Key Takeaways}
   \begin{itemize}
-    \item Mill treats builds as real code, not opaque configuration (but if you wish, you can also use the latter with yaml (new)).
+    \item Mill treats builds as real code, not opaque configuration (but if you wish, you can also use the latter with YAML (new)).
     \item The task graph is explicit, inspectable, and composable.
     \item Spring Boot and AOT/GraalVM support show Mill’s power for modern JVM apps.
     \item Android support demonstrates that Mill scales to highly complex build pipelines.

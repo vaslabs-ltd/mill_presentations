@@ -1,23 +1,23 @@
-//| mill-version: 1.1.0-RC2-34-12421d
+//| mill-version: 1.1.0-RC2-40-0576e4
 package build
 
 import mill.*, mill.javalib.*
 
-object `package` extends MavenModule {
+object `package` extends MavenModule { outer =>
 
-  def bomMvnDeps = Seq(
+  override def bomMvnDeps = Seq(
     mvn"org.springframework.boot:spring-boot-dependencies:3.5.7"
   )
 
-  def mvnDeps = Seq(mvn"org.springframework.boot:spring-boot-starter-web")
+  override def mvnDeps = Seq(
+    mvn"org.springframework.boot:spring-boot-starter-web"
+  )
 
   object test extends MavenTests, TestModule.Junit5 {
 
-    def bomMvnDeps = Seq(
-      mvn"org.springframework.boot:spring-boot-dependencies:3.5.7"
-    )
+    override def bomMvnDeps = outer.bomMvnDeps()
 
-    def mvnDeps =
+    override def mvnDeps =
       Seq(mvn"org.springframework.boot:spring-boot-starter-test")
   }
 }
