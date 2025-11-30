@@ -5,28 +5,13 @@ import mill.*
 import mill.javalib.*
 import mill.javalib.spring.boot.SpringBootModule
 
-trait FileCounterMavenModule extends MavenModule {
-
-  def countAllSourceFiles: T[Int] = Task {
-    allSourceFiles().filter(p => os.isFile(p.path)).size
-  }
-
-  def allGeneratedSourceFiles: T[Seq[PathRef]] = Task {
-    generatedSources().flatMap(p => os.walk(p.path).filter(os.isFile(_))).map(PathRef(_))
-  }
-
-  def countGeneratedSourceFiles: T[Int] = Task {
-    allGeneratedSourceFiles().size
-  }
-}
-
-object `package` extends SpringBootModule, FileCounterMavenModule {
+object `package` extends SpringBootModule, MavenModule {
 
   override def springBootPlatformVersion = "3.5.7"
 
   override def artifactName: T[String] = "spring-boot-native-demo"
 
-  object prod extends SpringBootOptimisedBuildModule, FileCounterMavenModule
+  object prod extends SpringBootOptimisedBuildModule
 
   object native extends MavenModule, NativeSpringBootBuildModule {
     def jvmId = "graalvm-community:23.0.1"
