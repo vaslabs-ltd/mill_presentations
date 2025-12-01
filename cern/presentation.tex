@@ -178,7 +178,7 @@ object `package` extends SpringBootModule, MavenModule {
       \end{itemize}
     \item Modules are composable units:
       \begin{itemize}
-        \item Inheritance and composition instead of copy-paste.
+        \item Inheritance and composition to extend or build new functionality.
       \end{itemize}
   \end{itemize}
 \end{frame}
@@ -236,25 +236,20 @@ trait FileCounterMavenModule extends MavenModule {
 
 \subsection{Mill Under Extreme Conditions}
 
-\begin{frame}{Android support shows how well designed Mill is}
+\begin{frame}{Why Android support in Mill matters}
   \begin{itemize}
     \item My first experience with Mill was to add support for Android builds: \url{https://github.com/com-lihaoyi/mill/pull/4169}
     \item We've developed the basic feature set for the dev lifecycle and got it merged within 2 weeks.
     \item About a year since, Mill supports all kinds of complex Android configurations out of the box.
-    \item Android builds are:
-      \begin{itemize}
-        \item Multi-stage (resources (compiling, linking), manifests, dexing, packaging).
-        \item Tooling-heavy and configuration-heavy.
-      \end{itemize}
-    \item If a build tool can handle Android cleanly:
-      \begin{itemize}
-        \item It has the right design foundations 
-        \item It’s a good sign it can handle complex pipelines
-      \end{itemize}
+    \item Android builds are inherently complex.
+    \item Extending Android to support Mill brought functionality for:
+    \begin{itemize}
+      \item Dependency resolution with Gradle modules and resolution parameters (e.g. taking into account platform, architecture, build variant).
+      \item Improved Kotlin tooling with KSP support (v1 and v2).
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
-%To be continued...
 
 \begin{frame}[fragile]{High-level Android pipeline in Mill (conceptual)}
   \centering
@@ -333,9 +328,10 @@ trait FileCounterMavenModule extends MavenModule {
   \begin{itemize}
     \item Mill treats builds as real code, not opaque configuration (but if you wish, you can also use the latter with YAML (new)).
     \item The task graph is explicit, inspectable, and composable.
-    \item Spring Boot and AOT/GraalVM support show Mill’s power for modern JVM apps.
+    \item Mill can support modern JVM apps with AOT and native configurations.
     \item Android support demonstrates that Mill scales to highly complex build pipelines.
     \item You can take control of your build by easily understanding and extending it.
+    \item Rich examples are documented for a variety of use cases and always validated and tested against each change in Mill.
   \end{itemize}
 \end{frame}
 
