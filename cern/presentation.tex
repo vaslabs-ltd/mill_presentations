@@ -168,8 +168,8 @@ object `package` extends SpringBootModule, MavenModule {
   \begin{itemize}
     \item Build definitions are Scala code:
       \begin{itemize}
-        \item Uses best world of OOP and FP.
-        \item Easily refactorable and testable; each Task yields a value that can be inspected, cached, reused.
+        \item Uses best world of \textbf{OOP} and \textbf{FP}.
+        \item Easily refactorable and testable; each \textbf{Task} yields a value that can be inspected, cached, reused.
       \end{itemize}
     \item Task graph is generated automatically and is inspectable.
       \begin{itemize}
@@ -180,6 +180,7 @@ object `package` extends SpringBootModule, MavenModule {
       \begin{itemize}
         \item Inheritance and composition to extend or build new functionality.
       \end{itemize}
+    \item Mill gives you the tools to debug issues when creating your own extensions (e.g. slowness - check \textbf{mill-chrome-profile.json})
   \end{itemize}
 \end{frame}
 
@@ -245,7 +246,7 @@ trait FileCounterMavenModule extends MavenModule {
     \item Extending Android to support Mill brought functionality for:
     \begin{itemize}
       \item Dependency resolution with Gradle modules and resolution parameters (e.g. taking into account platform, architecture, build variant).
-      \item Improved Kotlin tooling with KSP support (v1 and v2).
+      \item Improved Kotlin tooling with KSP support shown previously (v1 and v2).
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -282,8 +283,7 @@ trait FileCounterMavenModule extends MavenModule {
     \node (classes) [right=1cm of cjava] {Compiled\\Classes};
     \node (dex)     [below=of classes] {DEX\\(d8/r8)};
     \node (pack)    [right=0.2cm of linked] {Package APK};
-    \node (shrink)  [below=of pack] {Code Shrinking\\(r8/Proguard)};
-    \node (sign)    [below=of shrink] {Sign APK};
+    \node (sign)    [below=of pack] {Sign APK};
     \node (install) [below=of sign] {Install to\\Emulator};
     \node (run)     [right=of install] {Run/Test\\via ADB};
 
@@ -301,8 +301,7 @@ trait FileCounterMavenModule extends MavenModule {
     \draw[->] (linked) -- (pack);
     \draw[->] (dex)    -- (pack);
 
-    \draw[->] (pack)   -- (shrink);
-    \draw[->] (shrink) -- (sign);
+    \draw[->] (pack)   -- (sign);
     \draw[->] (sign)   -- (install);
     \draw[->] (install)-- (run);
 
@@ -333,6 +332,9 @@ trait FileCounterMavenModule extends MavenModule {
     \item You can take control of your build by easily understanding and extending it.
     \item Rich examples are documented for a variety of use cases and always validated and tested against each change in Mill.
   \end{itemize}
+  \begin{block}{Summary}
+    Mill is a Swiss knife. But there are efforts to have also the option for non programmatic usage if one wishes to do so!
+  \end{block}
 \end{frame}
 
 \subsection{Q\&A}
