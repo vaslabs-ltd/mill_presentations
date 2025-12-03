@@ -81,7 +81,7 @@ chmod +x mill
 \end{lstlisting}
 \end{frame}
 
-\begin{frame}[fragile]{Sample Mill build for Spring Boot}
+\begin{frame}[fragile]{Basic Spring Boot setup}
   \begin{lstlisting}[language=Scala]
 package build
 import mill.*, mill.javalib.*
@@ -103,7 +103,14 @@ object `package` extends MavenModule { outer =>
   \end{lstlisting}
 \end{frame}
 
-\begin{frame}[fragile]{Spring Boot + Fmt}
+
+\begin{frame}[fragile]{What's happening under the hood?}
+\begin{lstlisting}[language=Bash]
+./mill visualizePlan compile
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Dev tooling}
   \begin{lstlisting}[language=Scala]
 package build
 import mill.*, mill.javalib.*, palantirformat.PalantirFormatModule
@@ -114,13 +121,14 @@ object `package` extends MavenModule,PalantirFormatModule
   \begin{lstlisting}[language=Bash]
    ./mill mill.javalib.palantirformat.PalantirFormatModule/
   \end{lstlisting}
+  \begin{block}{Some common dev tools}
+    \begin{itemize}
+      \item Linting and formatting: \url{https://mill-build.org/mill/javalib/linting.html\#_autoformatting_with_palantir_java_format}
+      \item Docker: \url{https://mill-build.org/mill/contrib/docker.html}
+      \item Packaging and Publishing: \url{https://mill-build.org/mill/javalib/publishing.html}
+    \end{itemize}
+  \end{block}
 
-\end{frame}
-
-\begin{frame}[fragile]{What's happening under the hood?}
-\begin{lstlisting}[language=Bash]
-./mill visualizePlan compile
-\end{lstlisting}
 \end{frame}
 
 \subsection{Demo 2: AOT and GraalVM}
