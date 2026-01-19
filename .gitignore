@@ -10,6 +10,5 @@ mill
 out/
 .idea/
 .bsp/
-compose-samples-with-mill/
 .vscode/
 .metals/

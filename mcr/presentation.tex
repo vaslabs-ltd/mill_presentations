@@ -1,0 +1,126 @@
+\documentclass{beamer}
+
+\mode<presentation>
+{
+  \usetheme{Madrid}
+  \usecolortheme{rose}
+  \usefonttheme{structurebold}
+  \setbeamertemplate{navigation symbols}{}
+  \setbeamertemplate{caption}[numbered]
+}
+
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{listings}
+\usepackage{inconsolata}
+\usepackage{qrcode}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning}
+
+\usepackage{upquote}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  showstringspaces=false
+}
+
+\title[Mill as an Alternative Android Build Tool]{Until recently, Gradle was the only realistic option for Android builds.}
+\author{Vasilis Nicolaou}
+\institute{Vaslabs LTD}
+\date{Android x GDG Manchester winter meetup @ 22 January 2026}
+
+\begin{document}
+
+% =========================
+% Title & Agenda
+% =========================
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+% =========================
+% Intro / Context
+% =========================
+
+\section{Introduction}
+
+\begin{frame}{Who am I?}
+  \begin{itemize}
+    \item JVM developer (Java, Scala) with experience in distributed systems.
+    \item Contributor to Mill: Android, GraalVM, Spring Boot, Micronaut.
+    \item I went through various build tools; Maven, Gradle, Sbt and now... Mill!
+    \item Today: Software Engineering Consultant with own firm and a small but strong team of software engineers!
+  \end{itemize}
+\end{frame}
+
+% =========================
+% Live Demos First
+% =========================
+
+\section{Mill in Action}
+
+\subsection{Demo 1: Android with Mill}
+
+
+
+
+% =========================
+% Comparison & Wrap-up
+% =========================
+
+\section{Closing Remarks}
+
+\subsection{Key Takeaways}
+
+\begin{frame}{Key Takeaways}
+  \begin{itemize}
+    \item Mill treats builds as real code, not opaque configuration (but if you wish, you can also use the latter with YAML (new)).
+    \item The task graph is explicit, inspectable, and composable.
+    \item Mill can support modern JVM apps with AOT and native configurations.
+    \item Android support demonstrates that Mill scales to highly complex build pipelines.
+    \item You can take control of your build by easily understanding and extending it.
+    \item Rich examples are documented for a variety of use cases and always validated and tested against each change in Mill.
+  \end{itemize}
+  \begin{block}{Summary}
+    Mill is a Swiss knife. But there are efforts to have also the option for non programmatic usage if one wishes to do so!
+  \end{block}
+\end{frame}
+
+\subsection{Q\&A}
+
+\begin{frame}{Questions}
+  \begin{itemize}
+    \item Which version of Spring boot are you using?
+    \item What is your library stack? (Mono/Flux, rxJava, Lombok, Immutables)
+    \item Do you deploy native images? Are you using AOT?
+    \item Any other testing libraries/pre-processors?
+    \item What is the biggest pain on the build tool you are using?
+    \item Plain Java? Kotlin? Mixed?
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Thank you!}
+  \centering
+  \Large{Thank you!}\\[1em]
+  \normalsize
+  \begin{itemize}
+      \item Documentation: \url{https://mill-build.org/}
+      \item Github Repo: \url{https://github.com/com-lihaoyi/mill}
+      \item Try Mill and join Mill's Discord Channel:
+  \end{itemize}
+
+  \quad
+  \qrcode[height=5cm]{https://discord.gg/bt3DPbfUmV}
+
+\end{frame}
+
+\end{document}
