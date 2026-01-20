@@ -26,6 +26,10 @@ object app
     AndroidHiltSupport {
 
   def kotlinVersion = Versions.kotlinVersion
+
+  override def kotlinLanguageVersion: T[String] = "2.0"
+
+  override def kotlinApiVersion: T[String] = "2.0"
   def kspVersion = Versions.kspVersion
   def kspJvmTarget = "17"
 
@@ -116,6 +120,10 @@ object app
 
     override def kspVersion = Versions.kspVersion
 
+    override def kotlinLanguageVersion: T[String] = "2.0"
+
+    override def kotlinApiVersion: T[String] = "2.0"
+
     def kotlinSymbolProcessors: T[Seq[Dep]] = Seq(
       mvn"androidx.room:room-compiler:2.7.1",
       mvn"com.google.dagger:hilt-android-compiler:2.56"
@@ -148,65 +156,11 @@ object app
       AndroidR8InstrumentedTestsModule,
       AndroidHiltSupport {
 
-    override def androidLinkedResources: T[PathRef] = Task {
-      val compiledLibResDir = androidCompiledLibResources().path
-      val moduleResDirs = (androidTransitiveCompiledResources() ++ androidCompiledModuleResources())
-        .map(_.path)
-
-      val filesToLink = os.walk(compiledLibResDir).filter(os.isFile(_)) ++
-        moduleResDirs.flatMap(os.walk(_).filter(os.isFile(_)))
-      val argFile = Task.dest / "to-link.txt"
-      os.write.over(argFile, filesToLink.map(_.toString()).mkString("\n"))
-
-      val javaRClassDir = Task.dest / "generatedSources/java"
-      val apkDir = Task.dest / "apk"
-      val proguard = Task.dest / "proguard"
-
-      os.makeDir.all(javaRClassDir)
-      os.makeDir.all(proguard)
-      os.makeDir(apkDir)
-
-      val resApkFile = apkDir / "res.apk"
-
-      val mainDexRulesProFile = proguard / "main-dex-rules.pro"
-
-      val aapt2Link = Seq(this.androidSdkModule().aapt2Exe().path.toString(), "link")
-
-      val linkArgs = Seq(
-        "-I",
-        this.androidSdkModule().androidJarPath().path.toString,
-        "--manifest",
-        androidMergedManifest().path.toString,
-        "--custom-package",
-        androidNamespace,
-        "--java",
-        javaRClassDir.toString,
-        "--min-sdk-version",
-        this.androidMinSdk().toString,
-        "--target-sdk-version",
-        androidTargetSdk().toString,
-        "--version-code",
-        androidVersionCode().toString,
-        "--version-name",
-        androidVersionName(),
-        "--proguard-main-dex",
-        mainDexRulesProFile.toString,
-        "--proguard-conditional-keep-rules"
-      ) ++ androidAaptOptions() ++ Seq(
-        "-o",
-        resApkFile.toString,
-        "-R",
-        "@" + argFile.toString
-      )
-
-      Task.log.info((aapt2Link ++ linkArgs).mkString(" "))
-
-      os.call(aapt2Link ++ linkArgs)
-
-      PathRef(Task.dest)
-    }
-
     def moduleDeps = super.moduleDeps ++ Seq(`shared-test`)
+
+    override def kotlinLanguageVersion: T[String] = "2.0"
+
+    override def kotlinApiVersion: T[String] = "2.0"
     def kspJvmTarget = "17"
 
     def testFramework = "com.example.android.architecture.blueprints.todoapp.CustomTestRunner"
@@ -274,6 +228,10 @@ object `shared-test` extends AndroidKotlinModule, AndroidHiltSupport {
   def moduleDeps = Seq(app)
 
   def kotlinVersion = Versions.kotlinVersion
+
+  override def kotlinLanguageVersion: T[String] = "2.0"
+
+  override def kotlinApiVersion: T[String] = "2.0"
   def kspVersion = Versions.kspVersion
   def kspJvmTarget = Versions.kspJvmTarget
 

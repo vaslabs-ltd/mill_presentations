@@ -66,12 +66,52 @@
 % Live Demos First
 % =========================
 
-\section{Mill in Action}
+\section{Mill Live Demo}
 
-\subsection{Demo 1: Android with Mill}
+\subsection{Architecture Samples (Hilt/KSP, Simple Compose)}
+
+\begin{frame}{Architecture Samples (BuildConfig, Hilt/KSP, Simple Compose)}
+  \vspace{0.5em}
+  \textbf{Basic CLI usage:}
+  \begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny]
+./mill app.compile
+./mill app.androidApk
+./mill app.androidTest.androidTestApk
+./mill app.createAndroidVirtualDevice
+./mill app.startAndroidEmulator
+./mill app.androidInstall
+./mill app.androidRun --activity com.example.android.architecture.blueprints.todoapp.TodoActivity
+./mill app.androidTest
+./mill app.stopAndroidEmulator
+\end{lstlisting}
+\end{frame}
+
+\subsection{Compose Samples}
 
 
+\begin{frame}{JetNews}
+  \vspace{0.5em}
+  \textbf{Basic CLI usage:}
+  \begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny]
+./mill JetNews.app.androidApk
+./mill JetNews.app.androidTest.androidTestApk
+./mill app.startAndroidEmulator
+./mill app.androidInstall
+./mill app.androidTest
+\end{lstlisting}
+\end{frame}
 
+\begin{frame}{Jetcaster}
+  \vspace{0.5em}
+  \textbf{Basic CLI usage:}
+  \begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny]
+./mill Jetcaster.wear.androidApk
+./mill Jetcaster.wear.androidTest.androidTestApk
+./mill Jetcaster.wear.startAndroidEmulator
+./mill Jetcaster.wear.androidInstall
+./mill Jetcaster.wear.androidTest
+\end{lstlisting}
+\end{frame}
 
 % =========================
 % Comparison & Wrap-up
