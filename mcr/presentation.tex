@@ -70,7 +70,7 @@
 
 \subsection{Architecture Samples (Hilt/KSP, Simple Compose)}
 
-\begin{frame}{Architecture Samples (BuildConfig, Hilt/KSP, Simple Compose)}
+\begin{frame}[fragile]{Architecture Samples (BuildConfig, Hilt/KSP, Simple Compose)}
   \vspace{0.5em}
   \textbf{Basic CLI usage:}
   \begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny]
@@ -89,7 +89,7 @@
 \subsection{Compose Samples}
 
 
-\begin{frame}{JetNews}
+\begin{frame}[fragile]{JetNews}
   \vspace{0.5em}
   \textbf{Basic CLI usage:}
   \begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny]
@@ -101,7 +101,7 @@
 \end{lstlisting}
 \end{frame}
 
-\begin{frame}{Jetcaster}
+\begin{frame}[fragile]{Jetcaster}
   \vspace{0.5em}
   \textbf{Basic CLI usage:}
   \begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny]
@@ -113,38 +113,229 @@
 \end{lstlisting}
 \end{frame}
 
+\section{Android build process: The tricky parts}
+
+\subsection{Dependency Resolution}
+
+\begin{frame}[fragile]{Gradle Modules}
+  \begin{itemize}
+    \item Gradle modules for a multi-platform dependency resolution with variants
+  \end{itemize}
+  \begin{lstlisting}[language=Java, basicstyle=\ttfamily\tiny]
+"attributes": {
+  "org.gradle.category": "library",
+  "org.gradle.usage": "java-api",
+  "org.jetbrains.kotlin.platform.type": "androidJvm"
+}
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{BOM resolution}
+  \begin{itemize}
+    \item Use BOMs for compile time and runtime dependencies.
+    \item Resolve compiler plugins taking BOMs into account.
+  \end{itemize}
+  \begin{lstlisting}[language=Scala, basicstyle=\ttfamily\tiny]
+def kotlinSymbolProcessorsResolved: T[Seq[PathRef]] = Task {
+  defaultResolver().classpath(
+    kotlinSymbolProcessors(),
+    boms = allBomDeps()
+  )
+}
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Manage AAR artifacts}
+  \begin{itemize}
+    \item Extract AARs to get access to resources and AndroidManifest.xml
+    \item Package resources into final APK
+  \end{itemize}
+  \begin{lstlisting}[language=Scala, basicstyle=\ttfamily\tiny]
+    case class UnpackedDep(
+      name: String,
+      classesJar: Option[PathRef],
+      repackagedJars: Seq[PathRef],
+      proguardRules: Option[PathRef],
+      androidResources: Option[PathRef],
+      assets: Option[PathRef],
+      manifest: Option[PathRef],
+      lintJar: Option[PathRef],
+      metaInf: Option[PathRef],
+      nativeLibs: Option[PathRef],
+      baselineProfile: Option[PathRef],
+      rTxtFile: Option[PathRef],
+      publicResFile: Option[PathRef]
+  )
+  \end{lstlisting}
+\end{frame}
+
+\subsection{Jetpack Compose}
+
+\begin{frame}[fragile]{Jetpack Compose Compiler Plugin}
+  \begin{itemize}
+    \item Build support for Jetpack compose
+    \item Screenshot support with compose preview renderer
+    \item IDE integration support is still ongoing
+  \end{itemize}
+  \begin{block}{Dependency resolution Motivation}
+    The preview renderer runs locally on a JVM. The libraries required are of a different
+    variant than the ones required for Android runtime.
+  \end{block}
+
+  \begin{lstlisting}[language=Scala, basicstyle=\ttfamily\tiny]
+  private[mill] def addJvmVariantAttributes: ResolutionParams => ResolutionParams = { params =>
+    params.addVariantAttributes(
+      "org.jetbrains.kotlin.platform.type" -> VariantMatcher.Equals("jvm"),
+      "org.gradle.jvm.environment" -> VariantMatcher.Equals("standard-jvm")
+    )
+  }
+  \end{lstlisting}
+\end{frame}
+
+\subsection{Dependency Injection with Hilt}
+
+\begin{frame}[fragile]{Hilt / Dagger Annotation Processing}
+  \begin{itemize}
+    \item Support for Hilt / Dagger annotation processing
+    \item Support for Kotlin Symbol Processing (KSP) - which also extended Mill support for other platforms and frameworks
+    \item Extra step: Bytecode manipulation with ASM 
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Bytecode Manipulation with ASM for Hilt Support}
+  \begin{lstlisting}[language=Java, basicstyle=\ttfamily\tiny]
+.method public constructor <init>()V
+    .registers 1
+
+    .line 29
+    invoke-direct {p0}, Landroidx/activity/ComponentActivity;-><init>()V
+
+    .line 28
+    return-void
+.end method
+  \end{lstlisting}
+  \begin{lstlisting}[language=Java, basicstyle=\ttfamily\tiny]
+.method public constructor <init>()V
+    .registers 1
+
+    .line 29
+    invoke-direct {p0}, Lcom/example/android/architecture/blueprints/todoapp/Hilt_TodoActivity;-><init>()V
+
+    return-void
+.end method
+  \end{lstlisting}
+\begin{block}{References}
+  Bytecode is of TodoActivity in architecture-samples.
+
+  Find more details in this PR: \url{https://github.com/com-lihaoyi/mill/pull/4759}
+\end{block}
+\end{frame}
+
+\subsection{APK size optimisation}
+
+\begin{frame}[fragile]{APK Size Optimisation}
+  \begin{itemize}
+    \item Support Proguard / R8 rules from dependencies
+    \item Support code shrinking with R8
+    \item Support resource shrinking (still ongoing)
+    \item Most complex: Separate the test APK from the main APK
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Test APK: exclude dependencies from main APK}
+  \begin{lstlisting}[language=Scala, basicstyle=\ttfamily\tiny]
+    def androidPackagableDepsExclusionRules: T[Seq[(String, String)]] = Task {
+      val baseResolvedDependencies = defaultResolver().resolution(
+        Task.traverse(compileModuleDepsChecked)(_.mvnDeps)().flatten,
+        boms = allBomDeps()
+      )
+      baseResolvedDependencies.dependencies
+        .map(d => d.module.organization.value -> d.module.name.value).toSeq
+    }
+
+    def androidPackagableMvnDeps: T[Seq[Dep]] = Task {
+      mvnDeps().map(_.exclude(androidPackagableDepsExclusionRules()*))
+    }
+    
+    override def androidR8CompileOnlyClasspath: T[Seq[PathRef]] = Task {
+      Seq(outer.androidR8Jar())
+    }
+  \end{lstlisting}
+  \begin{block}{Summary}
+    \begin{itemize}
+      \item Use the main APK dependencies as exclusion rules in the test APK dependencies to avoid packaging them.
+      \item Compile the main module as a Jar and pass it to the test APK as compile only classpath.
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Test APK size comparison}
+  \begin{itemize}
+    \item Not a competition, we are still chasing the golden example (Gradle).
+    \item Shows how close we are in a lot of areas.
+  \end{itemize}
+\end{frame}
+\begin{frame}{Test APK size: Mill}
+  \begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{test_apk_mill.png}
+    \caption{Mill Test Apk}
+  \end{figure}
+\end{frame}
+\begin{frame}{Test APK size: Gradle}
+  \begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{test_apk_gradle.png}
+    \caption{Gradle Test Apk}
+  \end{figure}
+\end{frame}
+
+
+
 % =========================
 % Comparison & Wrap-up
 % =========================
 
 \section{Closing Remarks}
 
-\subsection{Key Takeaways}
+\subsection{Things we are working on}
 
-\begin{frame}{Key Takeaways}
+\begin{frame}{Ongoing Work}
   \begin{itemize}
-    \item Mill treats builds as real code, not opaque configuration (but if you wish, you can also use the latter with YAML (new)).
-    \item The task graph is explicit, inspectable, and composable.
-    \item Mill can support modern JVM apps with AOT and native configurations.
-    \item Android support demonstrates that Mill scales to highly complex build pipelines.
-    \item You can take control of your build by easily understanding and extending it.
-    \item Rich examples are documented for a variety of use cases and always validated and tested against each change in Mill.
+    \item Improve IDE integration (intelliJ) Support for:
+      \begin{itemize}
+        \item Compose completions.
+        \item Running the app through the IDE.
+      \end{itemize}
+    \item Support well known third party plugins and frameworks (e.g. Roboelectric)
   \end{itemize}
-  \begin{block}{Summary}
-    Mill is a Swiss knife. But there are efforts to have also the option for non programmatic usage if one wishes to do so!
-  \end{block}
+\end{frame}
+
+\begin{frame}{What's working well}
+  \begin{itemize}
+    \item Building from the CLI
+    \item Increased isolation compared to Gradle
+    \item Mill setups the Android environment, no need for manual user input (apart from accepting those licenses!)
+    \item Complex setups: KSP, Hilt, View/Data binding, Jetpack Compose, instrumented tests, Android Native.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{How to get started}
+  \begin{itemize}
+    \item Mill installation: \url{https://mill-build.org/mill/cli/installation-ide.html}
+    \item Android setup: https://mill-build.org/mill/android/android-initial-setup.html
+    \item Migration from Gradle flow: \url{https://youtu.be/VL_oPnvkiNY}
+    \item Examples (the official compose samples migrated to Mill, with continuous integration): \url{https://github.com/vaslabs-ltd/compose-samples-with-mill}
+  \end{itemize}
 \end{frame}
 
 \subsection{Q\&A}
 
 \begin{frame}{Questions}
   \begin{itemize}
-    \item Which version of Spring boot are you using?
-    \item What is your library stack? (Mono/Flux, rxJava, Lombok, Immutables)
-    \item Do you deploy native images? Are you using AOT?
-    \item Any other testing libraries/pre-processors?
-    \item What is the biggest pain on the build tool you are using?
-    \item Plain Java? Kotlin? Mixed?
+    \item We are looking to find more about your flow: Daily habits, what kind of features you use daily.
+    \item What do you wish Gradle did differently?
+    \item Do you use build variants? We don't have a special support specific to Android as Mill kind of supports that out of the box.
   \end{itemize}
 \end{frame}
 
