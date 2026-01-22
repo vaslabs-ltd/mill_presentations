@@ -33,7 +33,6 @@ trait BaseAndroidModule extends AndroidKotlinModule {
 
   def androidMinSdk = Versions.androidMinSdk
 
-
   override def androidMergeableManifests: Task[Seq[PathRef]] = Task {
     androidUnpackRunArchives().flatMap(_.manifest) ++ androidDirectModuleDepsManifests()
   }

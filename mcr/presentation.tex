@@ -62,6 +62,14 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Open Source and Vaslabs}
+  \begin{itemize}
+    \item Exposure (showing our work, that we can innovate and solve often unique problems)
+    \item Small firms often struggle to get talent. We hire undergrads and get them real work in open source.
+    \item It's kind of fun!
+  \end{itemize}
+\end{frame}
+
 % =========================
 % Live Demos First
 % =========================
@@ -95,10 +103,11 @@
   \begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny]
 ./mill JetNews.app.androidApk
 ./mill JetNews.app.androidTest.androidTestApk
-./mill app.startAndroidEmulator
-./mill app.androidInstall
-./mill app.androidTest
+./mill JetNews.app.startAndroidEmulator
+./mill JetNews.app.androidInstall
+./mill JetNews.app.androidTest
 \end{lstlisting}
+
 \end{frame}
 
 \begin{frame}[fragile]{Jetcaster}
@@ -114,6 +123,16 @@
 \end{frame}
 
 \section{Android build process: The tricky parts}
+
+\subsection{Overview}
+
+\begin{frame}[fragile]{Android build plan}
+  \begin{figure}
+    \centering
+    \includegraphics[scale=0.045]{jetnews_visualise_plan}
+    \caption{Build tasks and their dependencies}
+  \end{figure}
+\end{frame}
 
 \subsection{Dependency Resolution}
 
@@ -148,8 +167,6 @@ def kotlinSymbolProcessorsResolved: T[Seq[PathRef]] = Task {
 \begin{frame}[fragile]{Manage AAR artifacts}
   \begin{itemize}
     \item Extract AARs to get access to resources and AndroidManifest.xml
-    \item Package resources into final APK
-  \end{itemize}
   \begin{lstlisting}[language=Scala, basicstyle=\ttfamily\tiny]
     case class UnpackedDep(
       name: String,
@@ -165,8 +182,18 @@ def kotlinSymbolProcessorsResolved: T[Seq[PathRef]] = Task {
       baselineProfile: Option[PathRef],
       rTxtFile: Option[PathRef],
       publicResFile: Option[PathRef]
-  )
+    )
   \end{lstlisting}
+    \item Link resources (aapt2 link)
+    \item Dynamic/Static resource linking (final/non final IDs)
+      \begin{itemize}
+        \item Final R IDs i.e. integer constants are inlined into the bytecode (no field access, just an inlined number).
+        \item Compile module dependencies with non final IDs (final IDs)
+        \item Compile main module with final Ids
+      \end{itemize}
+    \item Package resources into final APK
+  \end{itemize}
+
 \end{frame}
 
 \subsection{Jetpack Compose}
