@@ -28,7 +28,7 @@
   showstringspaces=false
 }
 
-\title[Mill as an Alternative Android Build Tool]{Until recently, Gradle was the only realistic option for Android builds.}
+\title[Mill as an Alternative Android Build Tool]{Mill as an Alternative Android Build Tool}
 \author{Vasilis Nicolaou}
 \institute{Vaslabs LTD}
 \date{Android x GDG Manchester winter meetup @ 22 January 2026}
@@ -99,7 +99,7 @@
 
 \begin{frame}[fragile]{JetNews}
   \vspace{0.5em}
-  \textbf{Basic CLI usage:}
+  \textbf{Install and test}
   \begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny]
 ./mill JetNews.app.androidApk
 ./mill JetNews.app.androidTest.androidTestApk
@@ -112,13 +112,21 @@
 
 \begin{frame}[fragile]{Jetcaster}
   \vspace{0.5em}
-  \textbf{Basic CLI usage:}
+  \textbf{Start a wear emulator and run}
   \begin{lstlisting}[language=bash, basicstyle=\ttfamily\tiny]
 ./mill Jetcaster.wear.androidApk
-./mill Jetcaster.wear.androidTest.androidTestApk
 ./mill Jetcaster.wear.startAndroidEmulator
 ./mill Jetcaster.wear.androidInstall
-./mill Jetcaster.wear.androidTest
+./mill Jetcaster.wear.andoidRun --activity .MainActivity
+\end{lstlisting}
+
+\begin{lstlisting}[language=Scala, basicstyle=\ttfamily\tiny]
+override def androidVirtualDevice = AndroidVirtualDevice(
+  apiVersion = "android-34",
+  architecture = "x86_64",
+  deviceId = "wearos_large_round",
+  systemImageSource = "android-wear"
+)
 \end{lstlisting}
 \end{frame}
 
@@ -350,9 +358,10 @@ def kotlinSymbolProcessorsResolved: T[Seq[PathRef]] = Task {
 \begin{frame}{How to get started}
   \begin{itemize}
     \item Mill installation: \url{https://mill-build.org/mill/cli/installation-ide.html}
-    \item Android setup: https://mill-build.org/mill/android/android-initial-setup.html
+    \item Android setup: \url{https://mill-build.org/mill/android/android-initial-setup.html}
     \item Migration from Gradle flow: \url{https://youtu.be/VL_oPnvkiNY}
     \item Examples (the official compose samples migrated to Mill, with continuous integration): \url{https://github.com/vaslabs-ltd/compose-samples-with-mill}
+    \item Blog post: \url{https://mill-build.org/blog/15-android-build-flow.html}
   \end{itemize}
 \end{frame}
 
@@ -371,6 +380,7 @@ def kotlinSymbolProcessorsResolved: T[Seq[PathRef]] = Task {
   \Large{Thank you!}\\[1em]
   \normalsize
   \begin{itemize}
+      \item Slides: \url{https://github.com/vaslabs-ltd/mill_presentations}
       \item Documentation: \url{https://mill-build.org/}
       \item Github Repo: \url{https://github.com/com-lihaoyi/mill}
       \item Try Mill and join Mill's Discord Channel:
