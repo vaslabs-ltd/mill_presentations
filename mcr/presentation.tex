@@ -123,6 +123,75 @@ override def androidVirtualDevice = AndroidVirtualDevice(
 \end{lstlisting}
 \end{frame}
 
+\subsection{Mill Programmable syntax}
+
+\begin{frame}[fragile]{Setting up an Android app (plain Java)}
+\begin{lstlisting}[language=Scala, basicstyle=\ttfamily\tiny]
+package build
+import mill.*, androidlib.*, scalalib.*
+
+object androidSdkModule0 extends AndroidSdkModule {
+  def buildToolsVersion = "35.0.0"
+}
+
+object app extends AndroidAppModule {
+  def androidSdkModule = mill.api.ModuleRef(androidSdkModule0)
+  def androidMinSdk = 19
+  def androidCompileSdk = 35
+  def androidApplicationId = "com.helloworld.app"
+  def androidApplicationNamespace = "com.helloworld.app"
+
+  object test extends AndroidAppTests, TestModule.Junit4 {
+    def junit4Version = "4.13.2"
+  }
+
+  object androidTest extends AndroidAppInstrumentedTests {
+
+    def androidSdkModule = mill.api.ModuleRef(androidSdkModule0)
+
+    def mvnDeps = Seq(
+      mvn"androidx.test.ext:junit:1.2.1",
+      mvn"androidx.test:runner:1.6.2",
+      mvn"androidx.test.espresso:espresso-core:3.5.1",
+      mvn"junit:junit:4.13.2"
+    )
+  }
+}
+\end{lstlisting}
+\end{frame}
+
+
+\begin{frame}[fragile]{Setting up an Android app (Kotlin)}
+\begin{lstlisting}[language=Scala, basicstyle=\ttfamily\tiny]
+package build
+import mill.*, androidlib.*, kotlinlib.*
+
+object androidSdkModule0 extends AndroidSdkModule {
+  def buildToolsVersion = "35.0.0"
+}
+
+object app extends AndroidAppKotlinModule {
+  def kotlinVersion = "2.0.20"
+  def androidSdkModule = mill.api.ModuleRef(androidSdkModule0)
+  def androidMinSdk = 19
+  def androidCompileSdk = 35
+  def androidApplicationId = "com.helloworld.app"
+  def androidApplicationNamespace = "com.helloworld.app"
+  object test extends AndroidAppKotlinTests, TestModule.Junit4 {
+    def junit4Version = "4.13.2"
+  }
+  object androidTest extends AndroidAppKotlinInstrumentedTests {
+    def mvnDeps = Seq(
+      mvn"androidx.test.ext:junit:1.2.1",
+      mvn"androidx.test:runner:1.6.2",
+      mvn"androidx.test.espresso:espresso-core:3.5.1",
+      mvn"junit:junit:4.13.2"
+    )
+  }
+}
+\end{lstlisting}
+\end{frame}
+
 \section{Android build process: The tricky parts}
 
 \subsection{Overview}
@@ -205,7 +274,7 @@ def kotlinSymbolProcessorsResolved: T[Seq[PathRef]] = Task {
     \item Screenshot support with compose preview renderer
     \item IDE integration support is still ongoing
   \end{itemize}
-  \begin{block}{Dependency resolution Motivation}
+  \begin{block}{Dependency resolution}
     The preview renderer runs locally on a JVM. The libraries required are of a different
     variant than the ones required for Android runtime.
   \end{block}
@@ -336,6 +405,8 @@ def kotlinSymbolProcessorsResolved: T[Seq[PathRef]] = Task {
         \item Running the app through the IDE.
       \end{itemize}
     \item Support well known third party plugins and frameworks (e.g. Roboelectric)
+    \item Integrate more examples, more configurations, continue improving.
+    \item Get feedback and information from the development community: continuous UX improvements
   \end{itemize}
 \end{frame}
 
