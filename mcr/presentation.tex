@@ -333,8 +333,7 @@ def kotlinSymbolProcessorsResolved: T[Seq[PathRef]] = Task {
 .end method
   \end{lstlisting}
 \begin{block}{References}
-  Bytecode is of TodoActivity in architecture-samples.
-
+  ASM manipulation uses the same tool as Gradle: \textbf{dagger.hilt.android.plugin.transform.AndroidEntryPointClassVisitor}
   Find more details in this PR: \url{https://github.com/com-lihaoyi/mill/pull/4759}
 \end{block}
 \end{frame}
@@ -415,7 +414,7 @@ def kotlinSymbolProcessorsResolved: T[Seq[PathRef]] = Task {
         \item Compose completions.
         \item Running the app through the IDE.
       \end{itemize}
-    \item Support well known third party plugins and frameworks (e.g. Roboelectric)
+    \item Support well known third party plugins and frameworks (e.g. Robolectric)
     \item Integrate more examples, more configurations, continue improving.
     \item Get feedback and information from the development community: continuous UX improvements
   \end{itemize}
